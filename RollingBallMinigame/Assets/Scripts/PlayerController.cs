@@ -5,6 +5,16 @@ using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
+    bool isJumpUnlocked = false;
+
+    bool canJump;
+    bool isJumping;
+
+    bool canBounce;
+    bool isBouncing;
+
+    float bouncingLimit = 2;
+
     Rigidbody rb;
 
     Vector3 movementDirection = new Vector3(0, 0, 0);
@@ -23,13 +33,16 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         canUseDash = true;
         currentlyUsingDash = false;
+        canJump = true;
+        isJumping = false;
+        canBounce = false;
+        isBouncing = false;
     }
 
     void OnMove(InputValue movementValue)
     {
         movementDirection = movementValue.Get<Vector2>();
         movementDirection = new Vector3(movementValue.Get<Vector2>().x, 0f, movementValue.Get<Vector2>().y);
-
     }
 
     private void Update()
@@ -46,7 +59,20 @@ public class PlayerController : MonoBehaviour
 
         if(Keyboard.current.spaceKey.wasPressedThisFrame)
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            if(canJump && !isJumping && !isBouncing && isJumpUnlocked)
+            {
+                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+                isJumping = true;
+                canBounce = true;
+            }
+            else if(isJumping && canBounce)
+            {
+                rb.AddForce(Vector3.down * jumpForce * 5, ForceMode.Impulse);
+                isBouncing = true;
+                isJumping = false;
+                canBounce = false;
+            }
+
         }
 
 
@@ -67,7 +93,29 @@ public class PlayerController : MonoBehaviour
 
             rb.AddForce(flattenedNormal * collision.relativeVelocity.magnitude, ForceMode.VelocityChange);
         }
-        
+       
+        if(collision.gameObject.CompareTag("Floor"))
+        {
+            if (isBouncing)
+            {
+                if (Mathf.Abs(collision.relativeVelocity.y) < bouncingLimit)
+                {
+                    isBouncing = false;
+                    Debug.Log(Mathf.Abs(rb.linearVelocity.y));
+                }
+                else
+                {
+                    Vector3 normal = collision.GetContact(0).normal;
+                    rb.AddForce(new Vector3(0, normal.y / 2, 0) * collision.relativeVelocity.magnitude, ForceMode.VelocityChange);
+                }
+
+            }
+            else if(!isBouncing)
+            {
+                isJumping = false;
+                canJump = true;
+            }
+        }
     }
 
     IEnumerator Dash(float duration)
@@ -76,9 +124,10 @@ public class PlayerController : MonoBehaviour
         canUseDash = false;
         currentlyUsingDash = true;
 
-        Vector3 direction = rb.linearVelocity.normalized;
+        Vector3 direction = Vector3.ProjectOnPlane(rb.linearVelocity.normalized, Vector3.up);
 
-        rb.linearVelocity = rb.linearVelocity.normalized;
+        rb.linearVelocity = new Vector3(rb.linearVelocity.normalized.x, rb.linearVelocity.y, rb.linearVelocity.normalized.z);
+        //rb.linearVelocity = rb.linearVelocity.normalized;
         rb.AddForce(direction * dashForce , ForceMode.Impulse);
         
         yield return new WaitForSeconds(duration);
@@ -111,6 +160,18 @@ public class PlayerController : MonoBehaviour
                 Debug.Log("Collectable obtained!");
                 Destroy(other.gameObject);
                 break;
+            case "PowerUp":
+                if(other.gameObject.GetComponent<PowerUp>().index == 1)
+                {
+                    isJumpUnlocked = true;
+                    Destroy(other.gameObject);
+                }
+                else if (other.gameObject.GetComponent<PowerUp>().index == 2)
+                {
+                    //isDashUnlocked = true;
+                    Destroy(other.gameObject);
+                }
+                break;
             case "Finish":
                 SceneManager.LoadScene(SceneManager.GetActiveScene().name);
                 break;
@@ -128,6 +189,8 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocity = rb.linearVelocity.normalized * maxSpeed;
         }
+
+        //Debug.Log("Vertical Speed: " + rb.linearVelocity.y);
 
     }
 }
