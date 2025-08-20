@@ -16,6 +16,10 @@ public class PlayerCharacterController : MonoBehaviour
 
     CharacterController characterController;
 
+    public float coyoteTime = 0.2f;
+    private float coyoteTimeCounter;
+
+
     public Transform characterMeshTransform;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -49,8 +53,17 @@ public class PlayerCharacterController : MonoBehaviour
 
 
 
+        if(characterController.isGrounded)
+        {
+            coyoteTimeCounter = coyoteTime;
+        }
+        else
+        {
+            coyoteTimeCounter -= Time.deltaTime;
+        }
 
 
+        Debug.Log(coyoteTimeCounter);
 
         if(transform.position.y < -50)
         {
@@ -75,11 +88,23 @@ public class PlayerCharacterController : MonoBehaviour
     
     public void OnJump(InputAction.CallbackContext context)
     {
-        if (context.performed && characterController.isGrounded)
+        //if (context.performed && characterController.isGrounded)
+        if(context.performed && coyoteTimeCounter > 0f)
         {
             Debug.Log("JUMP!");
             velocity.y = jumpForce;
         }
+
+        if(context.canceled)
+        {
+            coyoteTimeCounter = 0f;
+            if(velocity.y > 0f)
+            {
+                velocity.y *= 0.5f;
+            }
+        }
+
+
     }
 
 }
