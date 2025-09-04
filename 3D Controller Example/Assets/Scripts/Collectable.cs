@@ -2,6 +2,11 @@ using UnityEngine;
 
 public class Collectable : MonoBehaviour
 {
+    public enum CollectableTypeEnum { Fruit, Gem}
+
+
+    public CollectableTypeEnum CollectableType;
+
     public float speed = 18f;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -12,7 +17,18 @@ public class Collectable : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        transform.Rotate(0, speed * Time.deltaTime, 0);
+        //transform.Rotate(0, speed * Time.deltaTime, 0);
+        
+        switch (CollectableType)
+        {
+            case CollectableTypeEnum.Fruit:
+                transform.Rotate(speed * Time.deltaTime, 0, 0);
+                break;
+            case CollectableTypeEnum.Gem:
+                transform.Rotate(0, speed / 4f * Time.deltaTime, speed / 4f * Time.deltaTime);
+                break;
+        }
+        
     }
 
 
@@ -21,7 +37,18 @@ public class Collectable : MonoBehaviour
         if(other.CompareTag("Player"))
         {
             Destroy(gameObject);
-            Debug.Log("OBTENIDO!!!");
+
+            switch (CollectableType)
+            {
+                case CollectableTypeEnum.Fruit:
+                    other.GetComponent<PlayerCharacterController>().GrabFruitEvent();
+                    break;
+                case CollectableTypeEnum.Gem:
+                    other.GetComponent<PlayerCharacterController>().GrabGemEvent();
+                    break;
+            }
+
+            
         }
     }
 }

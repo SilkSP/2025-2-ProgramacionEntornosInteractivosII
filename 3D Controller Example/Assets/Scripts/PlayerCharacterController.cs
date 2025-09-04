@@ -2,9 +2,13 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class PlayerCharacterController : MonoBehaviour
 {
+    public PlayerStats stats;
+
+
     [Header("Stats")]
     public float speed = 10f;
     private float gravity = -9.8f;
@@ -20,15 +24,13 @@ public class PlayerCharacterController : MonoBehaviour
 
     CharacterController characterController;
 
-    
-
     [Header("Ataques")]
     public bool isAttacking = false;
     public float attackRadius = 5f;
-    public float attackDuration = 0.4f; 
+    public float attackDuration = 0.4f;
     public float attackCooldownDuration = 0.5f;
     private bool attackOnCooldown = false;
-    public GameObject spinEffectMesh; 
+    public GameObject spinEffectMesh;
     public float attackSpinSpeed = 720f;
 
     [Header("Saltos")]
@@ -40,6 +42,23 @@ public class PlayerCharacterController : MonoBehaviour
     public float minHorizontalSpeedJumpC = 0.1f;
     public float gravityScaleJumpC = 3f;
 
+    public float jumpHorizontalMultiplier = 1f;
+    public float jumpExtraDamping = 6f;
+
+    private Vector3 jumpExtraHorizontal = Vector3.zero;
+
+    private Vector3 lastEffectiveForward = Vector3.forward;   // dirección horizontal efectiva guardada
+    private Vector3 smoothedGroundNormal = Vector3.up;        // para filtrar normals del terreno (no usado actualmente)
+    public float groundNormalSmoothSpeed = 20f;               // tuning: 10-30 suele funcionar
+    private Quaternion frozenRotation = Quaternion.identity;  // rotación congelada cuando no hay movimiento
+    private bool isRotationFrozen = false;                    // flag si estamos congelando rotación
+    public float minSpeedForRotation = 0.1f;                  // umbral para considerar movimiento
+    public float yawSmoothingSpeed = 10f;                     // velocidad de interpolación de rotación
+
+    // Hacer jump buffering
+    private Vector3 jumpDirection;
+    public float slopeUpBlend = 0.5f;
+
     public enum NextJumpEnum { JumpA = 0, JumpB = 1, JumpC = 2 }
 
     public NextJumpEnum nextJumpState = NextJumpEnum.JumpA;
@@ -50,10 +69,16 @@ public class PlayerCharacterController : MonoBehaviour
 
     private bool isInJumpC = false;
 
-
     [Header("Pendientes")]
-    public float raycastDistance = 10f;
+    private float raycastDistance;
     public float slopeRotationSpeed = 10f;
+    private Vector3 lastGroundNormal = Vector3.up;
+
+    // Umbral para considerar que había input al saltar
+    public float moveInputThresholdForRotationChoice = 0.1f;
+
+    // Decisión simple al saltar: si true, rotamos según movimiento; si false, según pendiente
+    private bool rotateToMovementOnJump = true;
 
     [Header("Visuales")]
     public Transform characterMeshTransform;
@@ -69,6 +94,8 @@ public class PlayerCharacterController : MonoBehaviour
     {
         characterController = GetComponent<CharacterController>();
         defaultGravityScale = gravityScale;
+
+        jumpDirection = Vector3.up;
 
         if (jumpForcesMultipliers == null || jumpForcesMultipliers.Length < 3) // valores por defecto
         {
@@ -93,19 +120,48 @@ public class PlayerCharacterController : MonoBehaviour
 
     void Update()
     {
-        moveDirection = transform.TransformDirection(new Vector3(moveInput.x, 0f, moveInput.y));
-        Vector3 horizontalVelocity = moveDirection * speed;
+        raycastDistance = characterController.height / 2 + 0.5f;
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, raycastDistance, LayerMask.GetMask("Ground")))
+        {
+            lastGroundNormal = hit.normal;
+
+            //smoothedGroundNormal = Vector3.Slerp(smoothedGroundNormal, hit.normal, Time.deltaTime * groundNormalSmoothSpeed);
+            //lastGroundNormal = smoothedGroundNormal;
+        }
+        else
+        {
+            lastGroundNormal = Vector3.up;
+
+            //smoothedGroundNormal = Vector3.Slerp(smoothedGroundNormal, Vector3.up, Time.deltaTime * groundNormalSmoothSpeed);
+            //lastGroundNormal = smoothedGroundNormal;
+        }
 
         if (characterController.isGrounded && velocity.y < 0)
         {
-            velocity.y = -2f;
+            if (lastGroundNormal == Vector3.up)
+            {
+                velocity.y = -2f;
+            }
+            else
+            {
+                // keep current behaviour for non-flat ground
+            }
         }
         else
         {
             velocity.y += gravity * gravityScale * Time.deltaTime;
         }
 
-        Vector3 newVelocity = horizontalVelocity + new Vector3(0, velocity.y, 0);
+        // evitar shadowing: asignar al campo moveDirection directamente
+        moveDirection = transform.TransformDirection(new Vector3(moveInput.x, 0f, moveInput.y));
+        moveDirection = Vector3.ProjectOnPlane(moveDirection, lastGroundNormal).normalized;
+
+        Vector3 horizontalVelocity = new Vector3(this.moveDirection.x, 0f, this.moveDirection.z) * speed;
+        Vector3 verticalVelocity = new Vector3(0, velocity.y + this.moveDirection.y, 0);
+
+        jumpExtraHorizontal = Vector3.Lerp(jumpExtraHorizontal, Vector3.zero, Time.deltaTime * jumpExtraDamping);
+
+        Vector3 newVelocity = horizontalVelocity + jumpExtraHorizontal + verticalVelocity;
         characterController.Move(newVelocity * Time.deltaTime);
 
         if (characterController.isGrounded)
@@ -119,16 +175,21 @@ public class PlayerCharacterController : MonoBehaviour
 
         if (transform.position.y < -50)
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        }
-
-        if (characterMeshTransform != null)
-        {
-            if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, raycastDistance))
+            if(stats != null)
             {
-                Quaternion newRotation = Quaternion.FromToRotation(characterMeshTransform.up, hit.normal) * characterMeshTransform.rotation;
-                characterMeshTransform.rotation = Quaternion.Lerp(characterMeshTransform.rotation, newRotation, Time.deltaTime * slopeRotationSpeed);
+                stats.vidas = stats.vidas - 1;
+                stats.cajasDestruidas = 0;
+                if(stats.vidas < 0)
+                {
+                    Application.Quit();
+                }
             }
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+
+
+
+
+
         }
 
         if (isAttacking)
@@ -138,7 +199,8 @@ public class PlayerCharacterController : MonoBehaviour
             {
                 if (attackHit.CompareTag("Box"))
                 {
-                    Destroy(attackHit.gameObject);
+                    DestroyCrateEvent(attackHit.GetComponent<Crate>());
+                    
                 }
             }
         }
@@ -167,14 +229,111 @@ public class PlayerCharacterController : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (moveDirection.sqrMagnitude > 0.01f && characterMeshTransform != null)
+        if (characterMeshTransform == null) return;
+
+        Vector3 inputHorizontal = moveDirection * speed;
+        Vector3 effectiveHorizontal = inputHorizontal + jumpExtraHorizontal;
+        float horizontalSpeed = effectiveHorizontal.magnitude;
+
+
+        Vector3 upForLook = Vector3.up;
+        if (characterController != null && characterController.isGrounded)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
-            characterMeshTransform.rotation = Quaternion.Lerp(characterMeshTransform.rotation, targetRotation, Time.deltaTime * 10f);
+            upForLook = lastGroundNormal;
         }
 
-        if (characterMeshTransform != null)
+        
+        Vector3 inputHorizDir = Vector3.zero;
+        if (inputHorizontal.sqrMagnitude > 0.000001f)
         {
+            inputHorizDir = inputHorizontal.normalized;
+        }
+        Vector3 inputHorizVec = new Vector3(inputHorizDir.x, 0f, inputHorizDir.z);
+
+        if (characterController != null && characterController.isGrounded)
+        {
+            lastEffectiveForward = inputHorizVec.normalized;
+        }
+        else
+        {
+            // EN AIRE:
+            if (rotateToMovementOnJump)
+            {
+                if (inputHorizVec.sqrMagnitude > 0.000001f)
+                {
+                    lastEffectiveForward = inputHorizVec.normalized;
+                }
+            }
+            else
+            {
+                if (lastGroundNormal.sqrMagnitude > 0.000001f)
+                {
+                    Vector3 outward = lastGroundNormal.normalized;
+                    outward.y = 0f;
+                    if (outward.sqrMagnitude > 0.000001f)
+                    {
+                        lastEffectiveForward = outward.normalized;
+                    }
+                }
+            }
+
+            // Si el jugador empuja con fuerza mientras está en el aire, le devolvemos control
+            bool strongInput = moveInput.sqrMagnitude > (moveInputThresholdForRotationChoice * moveInputThresholdForRotationChoice);
+            if (strongInput)
+            {
+                rotateToMovementOnJump = true;
+            }
+        }
+
+        Vector3 forwardOnSlope;
+        if (!characterController.isGrounded && !rotateToMovementOnJump)
+        {
+            Vector3 slopeForward = Vector3.zero;
+            if (lastGroundNormal.sqrMagnitude > 0.000001f)
+            {
+                slopeForward = Vector3.ProjectOnPlane(Vector3.up, lastGroundNormal);
+            }
+
+            if (slopeForward.sqrMagnitude < 0.000001f)
+            {
+                slopeForward = Vector3.ProjectOnPlane(lastEffectiveForward, upForLook);
+                if (slopeForward.sqrMagnitude < 0.000001f)
+                {
+                    slopeForward = Vector3.ProjectOnPlane(characterMeshTransform.forward, upForLook);
+                }
+            }
+
+            slopeForward.Normalize();
+            forwardOnSlope = slopeForward;
+        }
+        else
+        {
+            Vector3 f = Vector3.ProjectOnPlane(lastEffectiveForward, upForLook);
+            if (f.sqrMagnitude < 0.000001f)
+            {
+                f = Vector3.ProjectOnPlane(characterMeshTransform.forward, upForLook);
+            }
+            f.Normalize();
+            forwardOnSlope = f;
+        }
+
+        if (horizontalSpeed > minSpeedForRotation || isInJumpC || (characterController.isGrounded && lastGroundNormal.sqrMagnitude > 0.000001f))
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(forwardOnSlope, upForLook);
+            characterMeshTransform.rotation = Quaternion.Slerp(characterMeshTransform.rotation, targetRotation, Time.deltaTime * yawSmoothingSpeed);
+
+            frozenRotation = characterMeshTransform.rotation;
+            isRotationFrozen = false;
+            rotationWithoutSpinLocal = characterMeshTransform.localRotation;
+        }
+        else
+        {
+            if (!isRotationFrozen)
+            {
+                frozenRotation = characterMeshTransform.rotation;
+                isRotationFrozen = true;
+            }
+            characterMeshTransform.rotation = frozenRotation;
             rotationWithoutSpinLocal = characterMeshTransform.localRotation;
         }
 
@@ -227,8 +386,8 @@ public class PlayerCharacterController : MonoBehaviour
                 }
             }
         }
-    }
 
+    }
     private void OnLanded()
     {
         continuousJumpTimer = continuousJumpTimerDefault;
@@ -241,11 +400,28 @@ public class PlayerCharacterController : MonoBehaviour
         }
 
         pendingJumpState = nextJumpState;
+        jumpDirection = Vector3.up;
+        jumpExtraHorizontal = Vector3.zero;
+
+        rotateToMovementOnJump = true;
+    }
+
+    private void ApplyJump(float multiplier)
+    {
+        Vector3 dir = jumpDirection.normalized;
+
+        Vector3 impulse = dir * baseJumpForce * multiplier;
+
+        velocity.y = impulse.y;
+
+        Vector3 impulseHorizontal = new Vector3(impulse.x, 0f, impulse.z);
+        jumpExtraHorizontal += impulseHorizontal * jumpHorizontalMultiplier;
+
     }
 
     private void ExecuteGroundJumpA()
     {
-        velocity.y = baseJumpForce * jumpForcesMultipliers[0];
+        ApplyJump(jumpForcesMultipliers[0]);
         allowJumpCancel = true;
         isInJumpC = false;
         gravityScale = defaultGravityScale;
@@ -254,7 +430,7 @@ public class PlayerCharacterController : MonoBehaviour
 
     private void ExecuteGroundJumpB()
     {
-        velocity.y = baseJumpForce * jumpForcesMultipliers[1];
+        ApplyJump(jumpForcesMultipliers[1]);
         allowJumpCancel = false;
         isInJumpC = false;
         gravityScale = defaultGravityScale;
@@ -263,7 +439,7 @@ public class PlayerCharacterController : MonoBehaviour
 
     private void ExecuteGroundJumpC()
     {
-        velocity.y = baseJumpForce * jumpForcesMultipliers[2];
+        ApplyJump(jumpForcesMultipliers[2]);
         allowJumpCancel = false;
         isInJumpC = true;
         gravityScale = gravityScaleJumpC;
@@ -275,10 +451,33 @@ public class PlayerCharacterController : MonoBehaviour
         moveInput = context.ReadValue<Vector2>();
     }
 
+    private void ComputeJumpDirectionBySlope()
+    {
+        if (lastGroundNormal == Vector3.zero)
+        {
+            jumpDirection = Vector3.up;
+            return;
+        }
+
+        float t = Mathf.Clamp01(slopeUpBlend);
+
+        if (lastGroundNormal != Vector3.up)
+        {
+            Vector3 blendedDirection = Vector3.Slerp(Vector3.up, lastGroundNormal.normalized, t);
+            jumpDirection = blendedDirection.normalized;
+        }
+        else
+        {
+            jumpDirection = Vector3.up;
+        }
+    }
+
     public void OnJump(InputAction.CallbackContext context)
     {
         if (context.performed && coyoteTimeCounter > 0f)
         {
+            ComputeJumpDirectionBySlope();
+
             if (continuousJumpTimer > 0f)
             {
                 if (nextJumpState == NextJumpEnum.JumpA)
@@ -309,6 +508,27 @@ public class PlayerCharacterController : MonoBehaviour
                 ExecuteGroundJumpA();
             }
 
+            bool hadMovement = moveInput.sqrMagnitude > (moveInputThresholdForRotationChoice * moveInputThresholdForRotationChoice);
+            rotateToMovementOnJump = hadMovement;
+
+            if (!hadMovement)
+            {
+                Vector3 slopeForward = Vector3.zero;
+                if (lastGroundNormal.sqrMagnitude > 0.000001f)
+                {
+                    slopeForward = Vector3.ProjectOnPlane(Vector3.up, lastGroundNormal);
+                }
+
+                if (slopeForward.sqrMagnitude > 0.000001f)
+                {
+                    Vector3 slopeHoriz = new Vector3(slopeForward.x, 0f, slopeForward.z);
+                    if (slopeHoriz.sqrMagnitude > 0.000001f)
+                    {
+                        lastEffectiveForward = slopeHoriz.normalized;
+                    }
+                }
+            }
+
             coyoteTimeCounter = 0f;
             wasGroundedLastFrame = false;
         }
@@ -333,7 +553,6 @@ public class PlayerCharacterController : MonoBehaviour
                 StartCoroutine(PerformAttack());
             }
         }
-        
     }
 
     private IEnumerator PerformAttack()
@@ -363,4 +582,33 @@ public class PlayerCharacterController : MonoBehaviour
         attackOnCooldown = false;
     }
 
+    public void DestroyCrateEvent(Crate crate)
+    {
+        crate.OnDestroyCrate();
+
+        if (stats != null)
+        {
+            stats.cajasDestruidas = stats.cajasDestruidas + 1;
+        }
+        Destroy(crate.gameObject);
+
+    }
+
+    public void GrabFruitEvent()
+    {
+        if (stats != null)
+        {
+            stats.frutas = stats.frutas + 1;
+        }
+    }
+
+    public void GrabGemEvent()
+    {
+        if (stats != null)
+        {
+            stats.gemas = stats.gemas + 1;
+        }
+    }
 }
+
+
