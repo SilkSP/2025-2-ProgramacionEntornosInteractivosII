@@ -5,10 +5,10 @@ public class HUDManager : MonoBehaviour
 {
     public PlayerStats stats;
 
-    public TextMeshProUGUI vidasTexto;
-    public TextMeshProUGUI frutasTexto;
-    public TextMeshProUGUI cajasTexto;
-    public TextMeshProUGUI gemasTexto;
+    public TextMeshProUGUI vidasValue;
+    public TextMeshProUGUI frutasValue;
+    public TextMeshProUGUI cajasValue;
+    public TextMeshProUGUI gemasValue;
 
 
 
@@ -27,10 +27,10 @@ public class HUDManager : MonoBehaviour
 
     public void ActualizarHUD()
     {
-        vidasTexto.text = stats.vidas.ToString();
-        frutasTexto.text = stats.frutas.ToString();
-        cajasTexto.text = stats.cajasDestruidas.ToString();
-        gemasTexto.text = stats.gemas.ToString();
+        vidasValue.text = stats.vidas.ToString();
+        frutasValue.text = stats.frutas.ToString();
+        cajasValue.text = stats.cajasDestruidas.ToString();
+        gemasValue.text = stats.gemas.ToString();
 
     }
 }
