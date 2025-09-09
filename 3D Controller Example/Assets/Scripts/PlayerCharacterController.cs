@@ -7,11 +7,9 @@ public class PlayerCharacterController : MonoBehaviour
 {
     public PlayerStats playerStats;
 
-
     [HideInInspector] public PlayerMovement pm;
     [HideInInspector] public PlayerAttacks pa;
     [HideInInspector] public PlayerVisuals pv;
-
 
     [Header("Stats")]
     public float speed = 10f;
@@ -30,8 +28,18 @@ public class PlayerCharacterController : MonoBehaviour
     [HideInInspector] public Vector2 moveInput;
     [HideInInspector] public Vector3 moveDirection;
 
+
+
+
+    [Header("Slide")]
     [HideInInspector] public bool isCrouchButtonPressed;
     [HideInInspector] public bool isOnCrouch;
+    [HideInInspector] public bool isOnSlide;
+
+    public float slideDuration = 0.3f;               // duración del slide en segundos
+    public float slideSpeedMultiplier = 2.5f;       // multiplicador de velocidad durante slide
+    public float slideJumpInertiaFactor = 1.0f; // cuánto de la velocidad del slide se transfiere al salto (1 = 100%)
+    public float crouchSpeedMultiplier = 0.25f; // velocidad cuando está en crouch y NO en slide
 
 
     [HideInInspector]
@@ -173,5 +181,9 @@ public class PlayerCharacterController : MonoBehaviour
         }
     }
 
+    public void OnDamage()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
     //Hacer GameManager para agarrar cosas.
 }

@@ -37,7 +37,7 @@ public class PlayerAttacks : MonoBehaviour
                 }
             }
 
-            /*
+            /* //Versión no optima de OverlapSphere de referencia
             Collider[] attackHits = Physics.OverlapSphere(transform.position, pc.attackRadius);
             foreach (Collider attackHit in attackHits)
             {
@@ -62,7 +62,6 @@ public class PlayerAttacks : MonoBehaviour
                     if (bounceHits[i].CompareTag("Box"))
                     {
                         bounceHits[i].GetComponent<Crate>().OnPlayerBounce(pc);
-                        //pc.DestroyCrateEvent(bounceHits[i].GetComponent<Crate>());
                     }
                 }
             }
@@ -78,7 +77,6 @@ public class PlayerAttacks : MonoBehaviour
                     if (bounceHits[i].CompareTag("Box"))
                     {
                         bounceHits[i].GetComponent<Crate>().OnPlayerHeadBounce(pc); //Chocar con cabeza
-                        //pc.DestroyCrateEvent(bounceHits[i].GetComponent<Crate>());
                     }
                 }
             }
