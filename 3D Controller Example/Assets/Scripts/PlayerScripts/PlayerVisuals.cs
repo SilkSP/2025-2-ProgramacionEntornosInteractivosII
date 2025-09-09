@@ -1,13 +1,21 @@
 using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerVisuals : MonoBehaviour
 {
     PlayerCharacterController pc;
 
-    void Start()
+    [HideInInspector] public Vector3 defaultMeshScale;
+
+    void Awake()
     {
         pc = GetComponent<PlayerCharacterController>();
         if (pc == null) Debug.LogWarning("PlayerVisuals: no se encontró PlayerCharacterController en el mismo GameObject.");
+    }
+
+    private void Start()
+    {
+        defaultMeshScale = pc.characterMeshTransform.localScale;
     }
 
     private void LateUpdate()

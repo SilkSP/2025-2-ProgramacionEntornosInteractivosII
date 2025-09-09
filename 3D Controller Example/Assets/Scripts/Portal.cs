@@ -25,7 +25,7 @@ public class Portal : MonoBehaviour
         {
             if(mustResetStats)
             {
-                other.GetComponent<PlayerCharacterController>().stats.ResetStats();
+                other.GetComponent<PlayerCharacterController>().playerStats.ResetStats();
             }
             SceneManager.LoadScene(sceneName);
         }

@@ -1,16 +1,26 @@
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEngine.UI.Image;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
     PlayerCharacterController pc;
 
-    void Start()
+    [HideInInspector] public float defaultHeight;
+
+
+    void Awake()
     {
         pc = GetComponent<PlayerCharacterController>();
         if (pc == null) Debug.LogWarning("PlayerMovement: no se encontró PlayerCharacterController en el mismo GameObject.");
+    }
+
+    private void Start()
+    {
+        defaultHeight = pc.characterController.height;
     }
 
     void Update()
@@ -84,7 +94,64 @@ public class PlayerMovement : MonoBehaviour
         }
 
         pc.wasGroundedLastFrame = pc.characterController.isGrounded;
+
+
+
+
+        Debug.DrawRay(transform.position, Vector3.up * (defaultHeight / 2f) * 1.1f, Color.green);
+
+        if (!pc.isOnCrouch && pc.characterController.isGrounded && pc.isCrouchButtonPressed)
+        {
+            Crouch();
+        }
+        else if(pc.isOnCrouch && !pc.isCrouchButtonPressed && !CheckUp())
+        {
+            Uncrouch();
+        }
+
     }
+
+    private bool CheckUp()
+    {
+        //Debug.LogWarning("ASDASDAJGIUOAFSIJUO");
+        
+
+        if (Physics.Raycast(transform.position + (Vector3.up * (defaultHeight / 4f)), Vector3.up, ((defaultHeight / 2f) * 1.05f)))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public void Crouch()
+    {
+        pc.isOnCrouch = true;
+
+        pc.characterController.height = defaultHeight / 2f;
+
+        pc.characterController.Move(Vector3.down * (defaultHeight / 4f));
+
+        pc.characterMeshTransform.localScale = new Vector3(
+            pc.pv.defaultMeshScale.x, 
+            pc.pv.defaultMeshScale.y / 2f, 
+            pc.pv.defaultMeshScale.z);
+
+    }
+    public void Uncrouch()
+    {
+        pc.isOnCrouch = false;
+
+        pc.characterController.height = defaultHeight;
+
+        pc.characterController.Move(Vector3.up * (defaultHeight / 4f));
+
+        pc.characterMeshTransform.localScale = pc.pv.defaultMeshScale;
+
+    }
+
 
     public void OnMove(InputAction.CallbackContext context)
     {
@@ -121,7 +188,12 @@ public class PlayerMovement : MonoBehaviour
         {
             ComputeJumpDirectionBySlope();
 
-            if (pc.continuousJumpTimer > 0f)
+            if(pc.isOnCrouch)
+            {
+                ExecuteCrouchJump(); 
+            }
+
+            else if (pc.continuousJumpTimer > 0f)
             {
                 if (pc.nextJumpState == PlayerCharacterController.NextJumpEnum.JumpA)
                 {
@@ -179,11 +251,16 @@ public class PlayerMovement : MonoBehaviour
         if (context.canceled)
         {
             pc.coyoteTimeCounter = 0f;
-            if (pc.allowJumpCancel && pc.velocity.y > 0f)
-            {
-                pc.velocity.y *= 0.5f;
-                pc.allowJumpCancel = false;
-            }
+            CancelJump();
+        }
+    }
+
+    public void CancelJump()
+    {
+        if (pc.allowJumpCancel && pc.velocity.y > 0f)
+        {
+            pc.velocity.y *= 0.5f;
+            pc.allowJumpCancel = false;
         }
     }
 
@@ -225,4 +302,47 @@ public class PlayerMovement : MonoBehaviour
         pc.gravityScale = pc.gravityScaleJumpC;
         pc.pendingJumpState = PlayerCharacterController.NextJumpEnum.JumpA;
     }
+
+    public void ExecuteBounceJump()
+    {
+        ApplyJump(pc.bounceJumpForceMultiplier);
+        pc.allowJumpCancel = false;
+        pc.isInJumpC = false;
+        pc.gravityScale = pc.defaultGravityScale;
+        pc.pendingJumpState = PlayerCharacterController.NextJumpEnum.JumpA;
+    }
+
+    public void ExecuteCrouchJump()
+    {
+        Uncrouch();
+        ApplyJump(pc.crouchJumpForceMultiplier);
+        pc.allowJumpCancel = false;
+        pc.isInJumpC = false;
+        pc.gravityScale = pc.gravityScaleJumpC;
+        pc.pendingJumpState = PlayerCharacterController.NextJumpEnum.JumpA;
+    }
+
+
+
+
+    public void OnCrouch(InputAction.CallbackContext context)
+    {
+        if (pc == null) pc = GetComponent<PlayerCharacterController>();
+
+        if (context.performed)
+        {
+            pc.isCrouchButtonPressed = true;
+        }
+        if (context.canceled)
+        {
+            pc.isCrouchButtonPressed = false;
+        }
+    }
+
+
+    public void ForceStopVertical()
+    {
+        pc.velocity.y = 0f;
+    }
+
 }

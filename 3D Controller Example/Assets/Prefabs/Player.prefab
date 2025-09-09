@@ -1245,7 +1245,7 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
-        m_CallState: 1
+        m_CallState: 2
     m_ActionId: 351f2ccd-1f9f-44bf-9bec-d62ac5c5f408
     m_ActionName: 'Player/Move[/Keyboard/w,/Keyboard/upArrow,/Keyboard/s,/Keyboard/downArrow,/Keyboard/a,/Keyboard/leftArrow,/Keyboard/d,/Keyboard/rightArrow]'
   - m_PersistentCalls:
@@ -1273,7 +1273,19 @@ MonoBehaviour:
     m_ActionId: 852140f2-7766-474d-8707-702459ba45f3
     m_ActionName: 'Player/Interact[/Keyboard/e]'
   - m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 7440840271841411907}
+        m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
+        m_MethodName: OnCrouch
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_ActionId: 27c5f898-bc57-4ee1-8800-db469aca5fe3
     m_ActionName: 'Player/Crouch[/Keyboard/c]'
   - m_PersistentCalls:
@@ -1289,7 +1301,7 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
-        m_CallState: 1
+        m_CallState: 2
     m_ActionId: f1ba0d36-48eb-4cd5-b651-1c94a6531f70
     m_ActionName: 'Player/Jump[/Keyboard/space]'
   - m_PersistentCalls:
@@ -1361,7 +1373,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d87fe15e165547d478bbed86977e4ac9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  stats: {fileID: 11400000, guid: 9addb510941533844b147b80376e94f0, type: 2}
+  playerStats: {fileID: 11400000, guid: 9addb510941533844b147b80376e94f0, type: 2}
+  pm: {fileID: 0}
+  pa: {fileID: 0}
+  pv: {fileID: 0}
   speed: 12.5
   gravity: -9.8
   gravityScale: 5
@@ -1371,12 +1386,15 @@ MonoBehaviour:
   - 1
   - 1.2
   - 1.3
+  bounceJumpForceMultiplier: 1
   velocity: {x: 0, y: 0, z: 0}
   moveInput: {x: 0, y: 0}
   moveDirection: {x: 0, y: 0, z: 0}
+  isCrouchButtonPressed: 0
+  isOnCrouch: 0
   characterController: {fileID: 0}
   isAttacking: 0
-  attackRadius: 3
+  attackRadius: 3.5
   attackDuration: 0.4
   attackCooldownDuration: 0.2
   attackOnCooldown: 0
@@ -1384,7 +1402,7 @@ MonoBehaviour:
   attackSpinSpeed: 720
   coyoteTime: 0.2
   coyoteTimeCounter: 0
-  continuousJumpTimerDefault: 0.3
+  continuousJumpTimerDefault: 0.15
   continuousJumpTimer: 0
   minHorizontalSpeedJumpC: 0.1
   gravityScaleJumpC: 3
@@ -1428,6 +1446,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f041d86fd66be34a9495ad7be24cd37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  defaultHeight: 0
 --- !u!114 &9166813712555723070
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1452,6 +1471,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4fe72e6a83bdb247b39ba46460f9eaf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  defaultMeshScale: {x: 0, y: 0, z: 0}
 --- !u!1 &6352548564266503147
 GameObject:
   m_ObjectHideFlags: 0
