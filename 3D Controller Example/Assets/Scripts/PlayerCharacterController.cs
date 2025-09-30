@@ -111,6 +111,9 @@ public class PlayerCharacterController : MonoBehaviour
 
     private void Awake()
     {
+        
+
+
         if (pm == null) pm = GetComponent<PlayerMovement>();
         if (pa == null) pa = GetComponent<PlayerAttacks>();
         if (pv == null) pv = GetComponent<PlayerVisuals>();
@@ -143,7 +146,10 @@ public class PlayerCharacterController : MonoBehaviour
 
     void Start()
     {
-        
+        if (GameplayManager.instance != null)
+        {
+            GameplayManager.instance.SetPlayerGameObject(this.gameObject);
+        }
     }
 
     public void OnLanded()

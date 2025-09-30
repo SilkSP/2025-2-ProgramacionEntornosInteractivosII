@@ -382,6 +382,9 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 impulseHorizontal = new Vector3(impulse.x, 0f, impulse.z);
         pc.jumpExtraHorizontal += impulseHorizontal * pc.jumpHorizontalMultiplier;
+
+        GameplayManager.instance.AddJumps();
+
     }
 
     private void ExecuteGroundJumpA()

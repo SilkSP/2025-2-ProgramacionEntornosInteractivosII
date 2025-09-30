@@ -9,6 +9,7 @@ public class HUDManager : MonoBehaviour
     public TextMeshProUGUI frutasValue;
     public TextMeshProUGUI cajasValue;
     public TextMeshProUGUI gemasValue;
+    public TextMeshProUGUI saltosValue;
 
 
 
@@ -31,6 +32,7 @@ public class HUDManager : MonoBehaviour
         frutasValue.text = stats.frutas.ToString();
         cajasValue.text = stats.cajasDestruidas.ToString();
         gemasValue.text = stats.gemas.ToString();
+        saltosValue.text = GameplayManager.instance.GetJumps().ToString();
 
     }
 }
