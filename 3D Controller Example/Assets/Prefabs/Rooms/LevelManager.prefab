@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4835332994409918241
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8706482893308235857}
+  - component: {fileID: 1569226145258051875}
+  m_Layer: 0
+  m_Name: LevelManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8706482893308235857
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4835332994409918241}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.31804, y: 5.09, z: -7.29899}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1569226145258051875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4835332994409918241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29d9580418b6a764181fbe456ba7f411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomPrefabs:
+  - {fileID: 2869643021956314122, guid: e5f75fa13ace2bb4b9eaced41d7c5f92, type: 3}
+  - {fileID: 8061255224840916151, guid: c0a7bf24b1a2a9147b3de87d7fcc5be3, type: 3}
+  - {fileID: 8141232823605128302, guid: 90b30726f07bc6b4997b6ff4bb54293c, type: 3}
+  - {fileID: 3581181446381247589, guid: 32bc764e18009564fa2686b1bbbdb14b, type: 3}
+  - {fileID: 2331993725436400161, guid: adf5e878fdd64834dafb6f5e76c062de, type: 3}
+  - {fileID: 900429591479003889, guid: 7ab4ce3c11666ef4eb720bc870646552, type: 3}
+  - {fileID: 7279939525212382784, guid: 36b547b11516b1c4c8f845a9837b015c, type: 3}
+  - {fileID: 3581181446381247589, guid: 32bc764e18009564fa2686b1bbbdb14b, type: 3}
+  - {fileID: 2331993725436400161, guid: adf5e878fdd64834dafb6f5e76c062de, type: 3}
+  - {fileID: 3581181446381247589, guid: a7fad79fb72717d4abdca3778c0a01c3, type: 3}
+  - {fileID: 3581181446381247589, guid: a7fad79fb72717d4abdca3778c0a01c3, type: 3}
+  - {fileID: 3581181446381247589, guid: a7fad79fb72717d4abdca3778c0a01c3, type: 3}
+  - {fileID: 3581181446381247589, guid: a7fad79fb72717d4abdca3778c0a01c3, type: 3}
+  - {fileID: 3581181446381247589, guid: a7fad79fb72717d4abdca3778c0a01c3, type: 3}
+  - {fileID: 3581181446381247589, guid: a7fad79fb72717d4abdca3778c0a01c3, type: 3}
+  - {fileID: 3581181446381247589, guid: a7fad79fb72717d4abdca3778c0a01c3, type: 3}
+  roomFloorPrefab: {fileID: 3609956278026088347, guid: 6ecb7a350997ca447a51e08c48e83dac, type: 3}
+  roomWallPrefab: {fileID: 6289473729554494263, guid: 45b1c3eea8cb4dd41a3e0fbb78a8af29, type: 3}
+  roomExitPrefab: {fileID: 2126776182138414894, guid: adf9f841e2bc68e44bd3bcff7e9eeb81, type: 3}
+  playerReference: {fileID: 0}
+  enemyPrefabs:
+  - {fileID: 2659185707372913009, guid: 03a9509b850c14e4fa3f990391bba2e0, type: 3}
+  - {fileID: 3287428095015430823, guid: 046b465491d3f054e8c4bde93faaca3c, type: 3}
+  enemyProbability: 0.2
+  maxEnemiesPerRoom: 1
+  roomCount: 30
+  tileSize: 10
+  wallHeight: 2.5
+  wallThickness: 0.2
+  seed: 0
